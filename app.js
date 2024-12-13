@@ -15,15 +15,16 @@ if (!jwtSecret) {
 app.use(express.json())
 
 const authRoutes = require("./src/routes/authRoutes")
+const productRoutes = require("./src/routes/productRoutes")
 
 app.use('/api/auth', authRoutes)
+app.use('/api/products', productRoutes)
 
 app.use((err, req, res, next) => {
     console.log(err.stack);
     res.status(500).send('Something broke')
 })
 
-// Database connection and server startup
 const PORT = process.env.PORT || 3000;
 
 sequelize.sync()

@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs")
 
-const validatePassword = async function (password) {
-    return bcrypt.compare(password, this.password)
+const validatePassword = async function (enteredPassword) {
+    return bcrypt.compare(enteredPassword, this.password)
 }
 
 module.exports = { validatePassword };
