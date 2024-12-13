@@ -41,3 +41,37 @@ exports.validateLogin = validate([
     body('password')
         .not().isEmpty().withMessage('Password is required')
 ]);
+
+exports.productCreationValidation = validate([
+    body('name')
+        .trim()
+        .isLength({ min: 2, max: 22 })
+        .withMessage("Product name must be between 2 and 255 characters"),
+
+    body("category")
+        .trim()
+        .notEmpty()
+        .withMessage("Category is required."),
+
+    body("stock")
+        .isInt({ min: 0 })
+        .withMessage("Stock must be a non-negative integer")
+])
+
+exports.adminCreationValidation = [
+    body('username')
+        .trim()
+        .isLength({ min: 3, max: 50 })
+        .withMessage('Username must be between 3 and 50 characters'),
+
+    body('email')
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Invalid email address'),
+
+    body('password')
+        .isLength({ min: 12 })
+        .withMessage('Password must be at least 12 characters long')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/)
+        .withMessage('Password must include uppercase, lowercase, number, and special character')
+];
