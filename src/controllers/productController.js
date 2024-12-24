@@ -1,15 +1,13 @@
 const { Op } = require('sequelize');
-const Product = require('../models/product');
+const Product = require('../models/Product');
 const { validationResult } = require('express-validator');
 
 class ProductController {
-    // Utility for error handling
     handleError(res, message, error, statusCode = 500) {
         console.error(message, error);
         res.status(statusCode).json({ message, error: process.env.NODE_ENV === 'development' ? error.message : undefined });
     }
 
-    // Create a new product
     async createProduct(req, res) {
         try {
             const errors = validationResult(req);
@@ -27,7 +25,6 @@ class ProductController {
         }
     }
 
-    // Get all products with filtering and pagination
     async getAllProducts(req, res) {
         try {
             const { page = 1, limit = 10, category, minPrice, maxPrice, search } = req.query;
@@ -36,30 +33,39 @@ class ProductController {
             const whereClause = {};
 
             if (category) whereClause.category = category;
-            if (minPrice) whereClause.price = { [Op.gte]: minPrice };
-            if (maxPrice) whereClause.price = { ...whereClause.price, [Op.lte]: maxPrice };
-            if (search) whereClause[Op.or] = [
-                { name: { [Op.iLike]: `%${search}%` } },
-                { description: { [Op.iLike]: `%${search}%` } }
-            ];
+            if (minPrice) whereClause.price = { [Op.gte]: parseFloat(minPrice) };
+            if (maxPrice) whereClause.price = {
+                ...whereClause.price,
+                [Op.lte]: parseFloat(maxPrice)
+            };
+            if (search) {
+                whereClause[Op.or] = [
+                    { name: { [Op.iLike]: `%${search}%` } },
+                    { description: { [Op.iLike]: `%${search}%` } }
+                ];
+            }
 
             const products = await Product.findAndCountAll({
                 where: whereClause,
+                order: [['createdAt', 'DESC']],
                 limit: parseInt(limit),
-                offset,
-                order: [['createdAt', 'DESC']]
+                offset
             });
 
+            // Return results
             res.json({
                 total: products.count,
                 totalPages: Math.ceil(products.count / limit),
                 currentPage: parseInt(page),
                 products: products.rows
             });
+
         } catch (error) {
-            this.handleError(res, 'Error retrieving products', error);
+            console.error("Error fetching products:", error);
+            res.status(500).json({ message: "Internal Server Error", error: error.message });
         }
     }
+
 
     // Get a single product by ID
     async getProductById(req, res) {
@@ -98,7 +104,7 @@ class ProductController {
             const product = await Product.findByPk(id);
             if (!product) return res.status(404).json({ message: 'Product not found' });
 
-            await product.destroy(); // Assuming `paranoid: true` in model
+            await product.destroy();
 
             res.json({ message: 'Product deleted successfully' });
         } catch (error) {
